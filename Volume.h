@@ -225,7 +225,11 @@ public:
 	NTFS():Volume() {}
 	NTFS(HANDLE device, char letter) : Volume(device, letter) {};
 	~NTFS() {
-		freeMemory();
+		int l = listOfAll.size();
+		for (int i=0; i<l; i++) {
+			delete listOfAll[i];
+		}
+		listOfAll.clear();
 	}
 	IFace* getComponent(uint index) {
 		if (index >=0 && index < listOfAll.size()) return listOfAll[index];
@@ -241,7 +245,6 @@ public:
     	readMFTEntry();
     	loadAllComponent(); 
     	root = new Folder("root", 0, 5, -1);  
-    	root->load();
     	cout << "Load volume "<< volume_letter << " thanh cong!\n";
 	    system("pause");
 	}
@@ -288,7 +291,6 @@ public:
 		delete[] mft;
 	}
 	void loadAllComponent() {         
-		freeMemory();
 		BYTE* entry; 
 		uint ID;
 		int parentID;
@@ -385,17 +387,12 @@ public:
 		pChar(copy(entry, start+jmp, size), size, size);
 		delete[] entry;
 	}
-	void freeMemory() {
-		int l = listOfAll.size();
-		for (int i=0; i<l; i++) {
-			delete listOfAll[i];
-		}
-		listOfAll.clear();
-	}
 	void freeMemory(int exceptID) {
 		int l = listOfAll.size();
+		uint id;
 		for (int i=0; i<l; i++) {
-			if (listOfAll[i]->getID()!=exceptID) delete listOfAll[i];
+			id = listOfAll[i]->getID();
+			if (id!=5 && id!=exceptID) delete listOfAll[i]; // don't delele root
 		}
 		listOfAll.clear();
 	}
