@@ -131,6 +131,7 @@ public:
 			v->status();
 		}
 	}
+
 	void load() { 
 		if (v!=NULL) {  
 			system("cls");
@@ -143,16 +144,13 @@ public:
 		}
 		system("cls");
 		HANDLE device = NULL;
-	  	char my_volume[7] = "\\\\.\\";
-	  	char letter;
+		string disk_name;
+	  	string letter;
 	    do {
 			cout << "Nhap volume letter (E, F): ";
-			cin >>  letter;
-			my_volume[4] = letter;
-			my_volume[5] = ':';
-			my_volume[6] = '\0';
-
-			device = CreateFile(my_volume,             // Drive to open  // volume_letter
+			cin >> letter;
+            disk_name = "\\\\.\\" + letter + ":";
+			device = CreateFileA(disk_name.c_str(),             // Drive to open  // volume_letter
 		                        GENERIC_READ,           // Access mode
 		                        FILE_SHARE_READ|FILE_SHARE_WRITE,        // Share Mode
 		                        NULL,                   // Security Descriptor
@@ -178,8 +176,8 @@ public:
 			system("pause");
 		}
 		else {
-			if (status == 1) v = new FAT32(device, letter);
-			else if (status == 0) v = new NTFS(device, letter);
+			if (status == 1) v = new FAT32(device, letter[0]);
+			else if (status == 0) v = new NTFS(device, letter[0]);
 			v->load();
 		}
     }
@@ -198,12 +196,14 @@ public:
     	delete[] buffer; 
 		return -1; // bad                         
 	}
+	
 };
 
 Menu* menu = new Menu;  
 
 int main() {
   menu->run();
+
   //v = new NTFS;
   //v->test();
   return 0;
