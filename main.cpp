@@ -20,7 +20,7 @@ public:
   virtual void display(){};  
   virtual void properties(){};
   
-  // for file and folder
+  // for File and Folder
   virtual int isFile() {return 0;};
   virtual int isFolder() {return 0;};
   virtual string getName() {return "";};
@@ -42,9 +42,7 @@ public:
   virtual void readFolderTree(int parentID, vector<int> &chIndex) {};
   virtual void readFileContent(int ID, int start, int size) {};
   virtual void loadAllComponent(){};
-  virtual void freeMemory(int exceptID) {};
-  // for testing
-  virtual void test() {};    	
+  virtual void freeMemory(int exceptID) {};	
 };
 
 IFace* v = NULL;  
@@ -63,13 +61,15 @@ public:
 	void introduce() {  
 		system("cls");
 		cout << "-----Introduce-----\n";
-    	cout << "He Dieu Hanh Thay Long!\n";
-    	cout << "1. Nguyen Dinh CHien\n";
-    	cout << "2. Nguyen Duy Anh\n";
-    	cout << "3. Ngoc Duy\n";
-    	cout << "4. Pham Phuoc Binh\n";
-		cout << "5. Nguyen Minh Phat\n";
-		cout << "Tham khao: https://github.com/DAMHONGDUC/FAT32_NTFS\n\n";
+    	cout << "Lop He Dieu Hanh 20_5\n";
+    	cout << "Giao vien huong dan: Ths. Le Viet Long\n";
+    	cout << "Tham khao: https://github.com/DAMHONGDUC/FAT32_NTFS\n\n";
+    	cout << "Danh sach thanh vien: \n";
+		cout << "1. 20120441 - Nguyen Dinh Chien\n";
+    	cout << "2. 20120426 - Dao Duy Anh\n";
+    	cout << "3. 18120340 - Ho Nguyen Ngoc Duy\n";
+    	cout << "4. 20120440 - Pham Phuoc Binh\n";
+		cout << "5. 20120543 - Nguyen Minh Phat\n";
 	}
 	void run() {
     	int myoption;
@@ -165,7 +165,7 @@ public:
 	    		cout << "Please run program with administrative permission\n";
 			}
 			else {
-				cout << "Cannot load volume! error code #"<< GetLastError()<< endl;
+				cout << "Cannot load volume, error #"<< GetLastError()<< endl;
 				continue;
 			}	
 		} while (1);  
@@ -196,16 +196,12 @@ public:
     	delete[] buffer; 
 		return -1; // bad                         
 	}
-	
 };
 
 Menu* menu = new Menu;  
 
 int main() {
   menu->run();
-
-  //v = new NTFS;
-  //v->test();
   return 0;
 }
 

@@ -13,7 +13,7 @@ protected:
   IFace* parent;
   // ntfs file and folder
   uint ID;
-  int parentID; // -1
+  int parentID;
 public:
   Component() {}; 
   ~Component() {};
@@ -47,7 +47,7 @@ public:
   void properties() {  
   	cout << name << endl;
   	cout << "First cluster: "<< fcluster<<endl;
-  	cout << "Size         : "<< getSize() <<endl;
+  	cout << "Size         : "<< getSize() <<" bytes" <<endl;
   	if (name=="root" && parent==NULL) return;  
 	cout << "Updated hour : " << createdHour<<endl;
   	cout << "Updated date : " << createdDate<<endl;
@@ -125,12 +125,12 @@ private:
   // fat32 folder
   IFace** list=NULL;  
   // ntfs folder
-  vector<int> chIndex; // children InDex
+  vector<int> chIndex;   // children index
   
 public:
   Folder():Component() {};
   // for fat32 folder
-  Folder(string name, int fcluster, IFace* parent) // for root folder , fcluster = 2, parent==NULL 
+  Folder(string name, int fcluster, IFace* parent)      // for root folder , fcluster = 2, parent==NULL 
     :Component(name, fcluster, parent) {};                                
   Folder(string name, int fcluster, string createdHour, string createdDate, int size, IFace* parent) // for sub folder 
     :Component(name, fcluster, createdHour, createdDate, size, parent) {}; 
@@ -171,15 +171,15 @@ public:
         int l = chIndex.size();
       	for (; i<l; i++) {
       		tmp = v->getComponent(chIndex[i]); 
-	  		if (tmp!=NULL) { // deu khac null het
+	  		if (tmp!=NULL) {  
 	  			cout <<"  "<< i-2 <<". "<< tmp->getName()<<endl;
 			}
 			else {
-				cout << "bat on2\n";
+				cout << "bat on 2\n";
 			}
 	  	}
 	  }
-      else { // R->0, B->1, 0-1-2-3 -> (2-3-4-5)
+      else {  
       	for (; i<52; i++) {
 	  		if (list[i]!=NULL) {
 	  			cout <<"  "<< i-2 <<". "<< list[i]->getName()<<endl;
@@ -201,9 +201,9 @@ public:
   void load() {
     if (v->isNTFSVolume()) { 
 	    freeMemory(); 
-	    chIndex.push_back(parentID); // not index
-		chIndex.push_back(ID);       // not index
-		v->freeMemory(ID); // safety
+	    chIndex.push_back(parentID); 
+		chIndex.push_back(ID);       
+		v->freeMemory(ID);  
     	v->loadAllComponent();
     	v->readFolderTree(ID, chIndex); 
 		return;
@@ -246,7 +246,6 @@ public:
   	if (v->isNTFSVolume()) {
   		cout << "Folder name  : "<< name << endl;
   		cout << "ID           : " << ID <<endl;
-  		//cout << "Size         : "<< size <<endl;
   		if (parentID!=-1) cout << "Parent id    : "<< parentID <<endl;
 	}
 	else {

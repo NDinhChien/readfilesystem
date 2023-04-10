@@ -71,27 +71,30 @@ public:
 		cout << "Sector bat dau cua RDET (Data Area): "<< fSectorOfRDET <<" (cluster bat dau "<< fcluster<<")\n";
 	    system("pause");
 	}
-
+    // convert cluster to sector (fat32)
 	uint cToS(uint k) {
     	return sB + nF*sF + (k-2)*sC;  
     }
+    // read FAT table
 	BYTE* readFAT(int fcluster, uint &d, uint &r) {	
 		d = fcluster/(nS/4);        
 		r = fcluster%(nS/4);        
-		return read(device, (fSectorOfFAT+d)*nS, nS);  // FAT đánh số từ 0, 128 cluster, 256 KB 
+		return read(device, (fSectorOfFAT+d)*nS, nS); 
 	}
+	// look up FAT table to determine the clusters of the file/folder whose starting cluster is 'fcluster' 
+	// then, use cToS() to calculate an array of corresponding sectors of the file/folder 
 	int* lookUpFAT(int fcluster, int &n) {   
 	    vector<uint> clusters;
-	    uint t = fcluster; // the actual cluster
-	    uint d, r;         // tương ứng bảng fat thứ d, cluster thứ r   
+	    uint t = fcluster;  
+	    uint d, r;                             //  bang fat thu d (moi bang nS byte), cluster thu r   
 		BYTE* fat = readFAT(fcluster, d, r);
-		while(d!=0 || r>=2) {      // d==0 && r<2 (không đọc 2 cluster đầu tiên)
-			clusters.push_back(t); // oke
-			t = convert(copy(fat, r*4, 4), 4); // bảng fat thứ d, cluster thứ r  
-			if (t >= 0x0FFFFFF8) break;        // 0x0FFFFFFF, 0x0FFFFFF8 // end
-			if (t/(nS/4)!=d) {                 // có cần đọc lại bảng fat (!= d hiện tại)
+		while(d!=0 || r>=2) {                  // d==0 && r<2 (khong doc 2 cluster dau tien)
+			clusters.push_back(t); 
+			t = convert(copy(fat, r*4, 4), 4); // bang fat thu d, cluster thu r  
+			if (t >= 0x0FFFFFF8) break;        // 0x0FFFFFFF, 0x0FFFFFF8 -> end
+			if (t/(nS/4)!=d) {                 // co can doc lai bang fat (!= d hien tai)
 				delete[] fat;
-				fat = readFAT(t, d, r);        // đọc lại bảng fat, d, r được cập nhật (ứng với đoạn fat mới)
+				fat = readFAT(t, d, r);        // doc lai bang fat, d, r duoc cap nhat (ung voi bang fat moi)
 			}
 			else {
 				r = t%(nS/4);
@@ -99,6 +102,7 @@ public:
 		};
 		n = clusters.size()*sC;  
 		int* s = new int [n]; 
+		// chuyen ve mang cac sector tuong ung
 		for (int i=0; i<clusters.size(); i++) {
 			t = cToS(clusters[i]);
 			for (int j=0; j<sC; j++) {
@@ -108,29 +112,27 @@ public:
 		delete[] fat;
 		return s;	
 	}
-	
+	// read all file and folder of a SubFolder
 	IFace** readFolderTree(int fcluster, IFace* parent) {  
     	int n; 
-  	 	int* s = lookUpFAT(fcluster, n); // for RDET or SDET 
-		IFace** list = new IFace* [52];     // tối đa 50 thư mục con 
+  	 	int* s = lookUpFAT(fcluster, n);    // for RDET or SDET 
+		IFace** list = new IFace* [52];     // toi da 50 thu muc con (dung vector thi hay hon) 
 		for (int i=0; i<52; i++) list[i] = NULL; 
 		int index = 2;                       
 		
 		string name, ext;
 		BYTE* det;
 		int t;
-		// nS = 512, sC=4;
-		int nEntries = nS/32; //  16 entry (so entriest / mot bang det)
+		int nEntries = nS/32; 
     	for (int k=0; k<n; k++) {
-    		// nS = 512, sC=4;
     		det = read(device, s[k]*nS, nS); 
-    		int i = 2;        // bo qua 64 byte dau   
-    		//  RDET thi i=0; con lai i=2 
+    		int i = 2;
+    		//  RDET thi i=0; con lai i=2 ( bo qua 64 byte dau, entry cua thu muc cha va chinh no)
     		if (parent->getName()=="root" && parent->getParent()==NULL) i=0; 
 			for (; i<nEntries; i++) { 
-				t = i*32;                      // bat dau entry    
-				if (det[t]==0xE5) continue;    // bỏ qua entry đã bị xóa            
-				if (det[t+0xb]==0x10 || det[t+0xb]==0x20) { // file or sub folder  
+				t = i*32;                                   // bat dau entry    
+				if (det[t]==0xE5) continue;                 // bo qua entry da bi xaa            
+				if (det[t+0xb]==0x10 || det[t+0xb]==0x20) { // dau hieu file hoac sub folder  
 					// xu ly entry chinh 
 					name=ext="";
 					for (int k=0; k<8; k++) {
@@ -140,10 +142,10 @@ public:
 						ext += det[t+8+k];  
 					}
 					name += "." + ext;
-					
+					// xu ly cac entry phu (neu co)
 					int j = t-32;                // entry truoc do, cot 0
 					int jb = t-32 + 0xb;         // entry truoc do, cot b
-					if (j>=0 && det[j]!=0xE5 && jb>=0 && det[jb]==0xf) {   // có it nhat mot entry phu
+					if (j>=0 && det[j]!=0xE5 && jb>=0 && det[jb]==0xf) {   // co it nhat mot entry phu
 					    name = "";
 					    do {
 					    	for (int k=0; k<5; k++) name += det[j+1+2*k];   
@@ -152,18 +154,20 @@ public:
 					    	jb -= 32; j -= 32;
 						} while (j>=0 && det[j]!=0xE5 && jb>0 && det[jb]==0xf);
 					} 
-					//16h-2 giờ cập nhật
+					//16h-2 gio cap nhat
 					string createdHour = toHour(copy(det, t+0x16, 2));
-					//18h-2 ngày cập nhật
+					//18h-2 ngay cap nhat
 					string createdDate = toDate(copy(det, t+0x18, 2));
-					//1Ah-2 cluster bắt đầu
+					//1Ah-2 cluster bat dau
 					uint fclus =  convert(copy(det, t+0x1A, 2), 2); 
-					//1Ch-4 kích thước tập tin
+					//1Ch-4 kich thuoc tap tin
 					uint size =  convert(copy(det, t+0x1C, 4), 4);
-					if (det[t+0xb]==0x10) { // sub folder
+					// sub folder
+					if (det[t+0xb]==0x10) { 
 						list[index] = new Folder(name, fclus, createdHour, createdDate, size, parent);
 					}
 					else {
+						// file
 						bool isTextFile = false;
 						if (ext == "TXT") {
 							isTextFile = true;
@@ -177,7 +181,7 @@ public:
 		}
 		return list;
 	}
-	
+	// read content of a text file
 	void readFileContent(int fcluster, int size) {
   	    int n;
   	 	int* s = lookUpFAT(fcluster, n);
@@ -188,38 +192,14 @@ public:
 		if (t==0) pChar(read(device, s[n-1]*nS, nS),nS, nS);
 		else pChar(read(device, s[n-1]*nS, nS),t, t);
 	}
-	
-	void test() {
- 		device = CreateFile("\\\\.\\E:",             // Drive to open  // volume_letter
-		                        GENERIC_READ,           // Access mode
-		                        FILE_SHARE_READ|FILE_SHARE_WRITE,        // Share Mode
-		                        NULL,                   // Security Descriptor
-		                        OPEN_EXISTING,          // How to create
-		                        0,                      // File attributes
-		                        NULL);                  // Handle to template
-		    	
-	    if (device != INVALID_HANDLE_VALUE && device != NULL) {
-	    	cout << "ready to read!\n";
-		}
-        else if (GetLastError()==5) {
-    		cout << "Please run program with administrative permission\n";
-			return;
-		}
-		else {
-			cout << "Cannot load volume! error code #"<< GetLastError()<< endl;
-				return;
-		}	
-		//....
-		system("pause");
-	}
 };
 
 class NTFS: public Volume {
 private:
 	uint fSectorOfMFT;  
-	uint nE;                   // 1024 bytes
+	uint nE;                   // ntfs entry's size, commonly is 1024 bytes
 	uint numberOfEntry;
-	vector<IFace*> listOfAll; // all files and folder
+	vector<IFace*> listOfAll;  // all files and folder
 
 public:
 	NTFS():Volume() {}
@@ -231,12 +211,12 @@ public:
 		}
 		listOfAll.clear();
 	}
+	// get the index th component of listOfAll
 	IFace* getComponent(uint index) {
 		if (index >=0 && index < listOfAll.size()) return listOfAll[index];
 		return NULL; 
 	}
 	bool isNTFSVolume() {return 1;}
-	
 	void status() {
 		cout << "Volume hien tai: "<<  volume_letter << " (NTFS)\n";
 	}
@@ -286,7 +266,9 @@ public:
 			oDT = oSI + lSI + lFN;
 			lDT = convert(copy(mft, 0x10C, 4), 4);
 		}
-		tmp = sC/(nE/nS); //  so entry/cluster
+		// entries/cluster
+		tmp = sC/(nE/nS);  
+		// the number of ntfs entries
 		numberOfEntry = (convert(copy(mft, oDT + 24, 8), 8) + 1) * tmp; 
 		delete[] mft;
 	}
@@ -306,13 +288,13 @@ public:
 		 		delete[] entry;
 				continue;
 			}
-			ID = convert(copy(entry, 0x02C, 4), 4); // == id
+			ID = convert(copy(entry, 0x02C, 4), 4); 
 			if (ID > 38) {
 				
 				isTextFile = false;
 				isResident = false;
 				
-				jmp = convert(copy(entry, 0x014, 2), 2); // 56 ?
+				jmp = convert(copy(entry, 0x014, 2), 2); 
 				readSIAttr(entry, jmp, status, lSI);
 				if (status != 0 && status != 32) {
 					continue;
@@ -335,7 +317,7 @@ public:
 						system("pause");
 					}
 				}
-				
+				// resident file
 				if (type==0) isResident = true;
 				delete[] entry;
 				tmp = NULL;
@@ -348,10 +330,12 @@ public:
 	uint idToS(uint id) { // id To Sector
 		return fSectorOfMFT + id*2;
 	}
+	// read Standard Information Atrribute
 	void readSIAttr(BYTE entry[], uint jmp, int &status, uint &lSI) {
 		status = convert(copy(entry, jmp+56, 4), 4);
 		lSI = convert(copy(entry, jmp+4, 4), 4);
 	}
+	// read File Name Atrribute
 	void readFNAttr(BYTE entry[], uint jmp, int &parentID, string &name, string &ext, bool &isTextFile, uint &lFN) {
 		lFN = convert(copy(entry, jmp + 4, 4), 4);
 		parentID = convert(copy(entry, jmp+24, 6), 6);
@@ -370,17 +354,20 @@ public:
 			if (ext=="txt") isTextFile = true;
 		}
 	}
+	// read Data Atrribute
 	void readDTAttr(BYTE* entry, uint jmp, uint &size, int &type, uint &lDT) {
 		lDT = convert(copy(entry, jmp + 4, 4), 4);
 		size = convert(copy(entry, jmp + 16, 4), 4);
 		type = convert(copy(entry, jmp + 8, 1), 1);
 	}
+	// get all file and folder of a Subfoler, from ListOfAll
 	void readFolderTree(int parentID, vector<int> &chIndex) {
 		int l = listOfAll.size();
 		for (int i=0; i<l; i++) {
 			if (listOfAll[i]->getParentID()==parentID) chIndex.push_back(i); 
 		}
 	}
+	// read resident text file's content
 	void readFileContent(int ID, int start, int size) {
 		BYTE* entry = read(device, idToS(ID)*nS, nE); 
 		uint jmp = convert(copy(entry, start+20, 2), 2);
@@ -395,29 +382,6 @@ public:
 			if (id!=5 && id!=exceptID) delete listOfAll[i]; // don't delele root
 		}
 		listOfAll.clear();
-	}
-	void test() {
-		device = CreateFile("\\\\.\\F:",             // Drive to open  // volume_letter
-		                        GENERIC_READ,           // Access mode
-		                        FILE_SHARE_READ|FILE_SHARE_WRITE,        // Share Mode
-		                        NULL,                   // Security Descriptor
-		                        OPEN_EXISTING,          // How to create
-		                        0,                      // File attributes
-		                        NULL);                  // Handle to template
-		    	
-	    if (device != INVALID_HANDLE_VALUE && device != NULL) {
-	    	cout << "ready to read!\n";
-		}
-        else if (GetLastError()==5) {
-    		cout << "Please run program with administrative permission!\n";
-    		return;
-		}
-		else {
-			cout << "Cannot load volume! error code #"<< GetLastError()<< endl;
-			return;
-		}	
-		load();
-		system("pause");
 	}
 };
 

@@ -52,7 +52,7 @@ string toHour(BYTE hour[]) {
 	string str(to_string(h.to_ulong()) + ":"+ to_string(m.to_ulong())+ ":"+ to_string(s.to_ulong()));
 	return str;
 } 
-// print str 
+// print string
 void pChar(BYTE* str, int n, int ncol) {
 	int d = n/ncol;
 	int r = n%ncol;
@@ -67,7 +67,7 @@ void pChar(BYTE* str, int n, int ncol) {
 	}
 	if (r>0) cout << endl;	
 }
-// print str in hexa form
+// print string in hexa form
 void pHexa(BYTE* str, int n, int ncol) {
 	int t;
 	int d = n/ncol;
@@ -113,7 +113,6 @@ int getOption(int start, int end, int step, bool isletterAccepted) {
 			if (rs[0]=='b' || rs[0]=='B') return 0;
 			continue;
 		}
-		// so 1,2,... chu so
 		isNumber=true;
 		for (int i=0; i<l; i++) {
 			if (!isNumberChar(rs[i])) {
@@ -137,22 +136,20 @@ BYTE* read(HANDLE device, int vt, int k) {
 	}
 	return buffer;
 }
-//
-string toBinary(int n)
-{
+// convert an integer to binary
+string toBinary(int n) {
     string r;
     while(n!=0) {
 		r = (n%2==0 ? "0":"1") + r; 
-		n/=2;
+		n /= 2;
 	}
     return r;
 }
-
+// bitwise complement (~) of a binary string 
 string bitwise_complement(string strbit){
     for (int i = 0; i < strbit.length(); i++){
        strbit[i] = (strbit[i] == '0' ? '1' : '0');
     }
     return strbit;
 }
-//
 #endif
