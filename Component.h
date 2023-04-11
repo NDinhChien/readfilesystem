@@ -49,8 +49,8 @@ public:
   	cout << "First cluster: "<< fcluster<<endl;
   	cout << "Size         : "<< getSize() <<" bytes" <<endl;
   	if (name=="root" && parent==NULL) return;  
-	cout << "Updated hour : " << createdHour<<endl;
-  	cout << "Updated date : " << createdDate<<endl;
+	cout << "Created hour : " << createdHour<<endl;
+  	cout << "Created date : " << createdDate<<endl;
   }
 }; 
 

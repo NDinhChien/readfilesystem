@@ -150,7 +150,7 @@ public:
 					    do {
 					    	for (int k=0; k<5; k++) name += det[j+1+2*k];   
 					    	for (int k=0; k<6; k++) name += det[j+14+2*k];  
-					    	for (int k=0; k<2; k++) name += det[j+28+2*k]; //3
+					    	for (int k=0; k<2; k++) name += det[j+28+2*k];  
 					    	jb -= 32; j -= 32;
 						} while (j>=0 && det[j]!=0xE5 && jb>0 && det[jb]==0xf);
 					} 
@@ -185,12 +185,14 @@ public:
 	void readFileContent(int fcluster, int size) {
   	    int n;
   	 	int* s = lookUpFAT(fcluster, n);
-		for (int i=0; i<n-1; i++) {
-			pChar(read(device, s[i]*nS, nS),nS, nS);
+  	 	if (size > nS) {
+  	 		for (int i=0; i<n-1; i++) {
+				pChar(read(device, s[i]*nS, nS),nS, nS);
+				size -= nS;
+			}
+			if (size > 0) pChar(read(device, s[n-1]*nS, nS), size, size);
 		}
-		int t = size%nS;
-		if (t==0) pChar(read(device, s[n-1]*nS, nS),nS, nS);
-		else pChar(read(device, s[n-1]*nS, nS),t, t);
+		else pChar(read(device, s[n-1]*nS, nS), size, size);
 	}
 };
 
@@ -371,6 +373,7 @@ public:
 	void readFileContent(int ID, int start, int size) {
 		BYTE* entry = read(device, idToS(ID)*nS, nE); 
 		uint jmp = convert(copy(entry, start+20, 2), 2);
+		if (start + jmp + size > nS) size = nS - start - jmp;
 		pChar(copy(entry, start+jmp, size), size, size);
 		delete[] entry;
 	}
