@@ -67,6 +67,14 @@ void pChar(BYTE* str, int n, int ncol) {
 	}
 	if (r>0) cout << endl;	
 }
+void pStr(BYTE* str, int n) {
+	for (int i=0; i<n; i++) {
+		if (str[i] == 0x00 || str[i] >= 128) {	
+			break;
+		}
+		else cout << str[i];
+	}
+}
 // print string in hexa form
 void pHexa(BYTE* str, int n, int ncol) {
 	int t;
