@@ -150,7 +150,7 @@ public:
 					    do {
 					    	for (int k=0; k<5; k++) name += det[j+1+2*k];   
 					    	for (int k=0; k<6; k++) name += det[j+14+2*k];  
-					    	for (int k=0; k<3; k++) name += det[j+28+2*k]; 
+					    	for (int k=0; k<2; k++) name += det[j+28+2*k]; //3
 					    	jb -= 32; j -= 32;
 						} while (j>=0 && det[j]!=0xE5 && jb>0 && det[jb]==0xf);
 					} 

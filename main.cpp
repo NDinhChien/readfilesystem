@@ -68,7 +68,7 @@ public:
 		cout << "1. 20120441 - Nguyen Dinh Chien\n";
     	cout << "2. 20120426 - Dao Duy Anh\n";
     	cout << "3. 18120340 - Ho Nguyen Ngoc Duy\n";
-    	cout << "4. 20120440 - Pham Phuoc Binh\n";
+    	cout << "4. 20120436 - Pham Phuoc Binh\n";
 		cout << "5. 20120543 - Nguyen Minh Phat\n";
 	}
 	void run() {
