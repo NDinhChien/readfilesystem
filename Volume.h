@@ -190,7 +190,7 @@ public:
 		}
 		int t = size%nS;
 		if (t==0) pStr(read(device, s[n-1]*nS, nS),nS);
-		else pStr(read(device, s[n-1]*nS, nS),t);
+		else pStr(copy(read(device, s[n-1]*nS, nS), 0, t),t);
 	}
 };
 
