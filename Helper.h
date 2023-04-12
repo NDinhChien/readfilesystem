@@ -69,8 +69,12 @@ void pChar(BYTE* str, int n, int ncol) {
 }
 void pStr(BYTE* str, int n) {
 	for (int i=0; i<n; i++) {
-		if (str[i] == 0x00 || str[i] >= 128) {	
+		if (str[i] == 0 || str[i] >= 128) {	
 			break;
+		}
+		// 7 8 9 10
+		if (str[i]<32 && (str[i]<7 || str[i]>10)) {
+			continue;
 		}
 		else cout << str[i];
 	}
